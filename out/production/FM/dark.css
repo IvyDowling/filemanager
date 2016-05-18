@@ -1,0 +1,10 @@
+.root {
+    -fx-background-color: dimgray;
+}
+
+#title {
+    -fx-font-family: SansSerif;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+}
