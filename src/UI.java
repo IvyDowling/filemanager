@@ -14,7 +14,7 @@ public class UI extends Application {
 
     public void start(Stage stage) {
         stage.setTitle("FM");
-        Scene scene = new Scene(new Group(), 400, 500);
+        Scene scene = new Scene(new Group(), 950, 500);
         stage.getIcons().add(new Image("file: res/icon.png"));
 
         Group root = (Group) scene.getRoot();
