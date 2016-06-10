@@ -13,20 +13,20 @@ public class UI extends Application {
     }
 
     public void start(Stage stage) {
-        stage.setTitle("FM");
+        stage.setTitle("filemanager");
         Scene scene = new Scene(new Group(), 950, 500);
         stage.getIcons().add(new Image("file: res/icon.png"));
 
         Group root = (Group) scene.getRoot();
         try {
-            root.getChildren().add(new OpeningLayout(scene, "dark.css").getPane());
-        } catch (UnknownHostException uhe){
+            root.getChildren().add(new OpeningLayout(scene, "light.css").getPane());
+        } catch (UnknownHostException uhe) {
             //no privs
             System.err.print("couldn't get hostname");
             uhe.printStackTrace();
         }
         stage.setScene(scene);
-        stage.sizeToScene();
+        stage.setResizable(true);
         stage.show();
         stage.sizeToScene();
     }

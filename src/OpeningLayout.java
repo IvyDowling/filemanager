@@ -10,15 +10,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 public class OpeningLayout implements Displayable {
 
@@ -27,15 +22,14 @@ public class OpeningLayout implements Displayable {
     final Button home = new Button("home");
     final Button refresh = new Button("refresh");
     final Button back = new Button("<<");
-    final Label cmd = new Label("cmd:");
-    final TextField commandField = new TextField();
     final TextArea output = new TextArea();
+    final TextField workingDir = new TextField();
     private ObservableList<String> dirs = FXCollections.observableArrayList();
     private ListView<String> listView = new ListView<>(dirs);
 
     private String homedir = "";
     private String curdir = "";
-    private String stylesheet = "dark.css";
+    private String stylesheet = "light.css";
 
     public OpeningLayout(Scene scene, String ss) throws UnknownHostException {
         scene.getStylesheets().clear();
@@ -43,6 +37,7 @@ public class OpeningLayout implements Displayable {
         stylesheet = ss;
         //setup elements
         title.setId("title");
+        //listview
         listView.setMinSize(300, 400);
         listView.setOnMouseClicked((e) -> {
             navigate(listView.getSelectionModel().getSelectedItem());
@@ -83,17 +78,19 @@ public class OpeningLayout implements Displayable {
         back.setOnMouseReleased((e) -> {
             back();
         });
-
-        //text field exe
-        commandField.setMinWidth(300);
-        commandField.setOnKeyPressed((k) -> {
+        //working dir Text Field Action
+        workingDir.setOnKeyPressed((k) -> {
             if (k.getCode() == KeyCode.ENTER) {
-                commandField.setText("");
-                visit(commandField.getText());
+                if (new File(workingDir.getText()).exists()) {
+                    curdir = workingDir.getText();
+                    gotoDir(curdir);
+                }
             }
         });
+
         //output Text Area
         output.setPadding(new Insets(5, 5, 5, 5));
+        output.setWrapText(true);
         output.setEditable(false);
         //get init data
         curdir = homedir = System.getProperty("user.home");
@@ -105,40 +102,64 @@ public class OpeningLayout implements Displayable {
         BorderPane bp = new BorderPane();
         //format
         bp.setPadding(new Insets(5, 5, 5, 5));
-        //add
-        VBox vBox = new VBox(new Group());
-        vBox.getChildren().add(home);
-        vBox.getChildren().add(refresh);
-        vBox.getChildren().add(back);
-        HBox bottom = new HBox(new Group());
-        bottom.setPadding(new Insets(5, 5, 5, 5));
-        bp.setBottom(bottom);
-        bottom.getChildren().add(cmd);
-        cmd.setPadding(new Insets(5, 5, 0, 0));
-        bottom.getChildren().add(commandField);
-        vBox.setPadding(new Insets(0, 5, 5, 0));
-        bp.setLeft(vBox);
-        bp.setTop(title);
-        bp.setCenter(listView);
-        bp.setRight(output);
+        //left
+
+        //top
+        HBox top = new HBox(new Group());
+        top.getChildren().add(title);
+        top.getChildren().add(home);
+        top.getChildren().add(refresh);
+        top.getChildren().add(back);
+        bp.setTop(top);
+        //bottom
+
+        //center
+        VBox center = new VBox();
+        center.getChildren().add(workingDir);
+        center.getChildren().add(listView);
+        workingDir.setText(getCurentDir());
+        bp.setCenter(center);
+        //right
+        HBox right = new HBox();
+        right.getChildren().add(output);
+        bp.setRight(right);
         return bp;
     }
 
     private String[] getCurrent() {
-        File f = new File(curdir);
-        if (f != null) {
-            String[] local = f.list();
-            Arrays.sort(local);
-            return local;
-        } else {
-            return new String[]{};
+        File f = new File(getCurentDir());
+        if (f.isFile()) {
+            //might be a dir
+            if (f.canRead()) {
+                try {
+                    BufferedReader br = new BufferedReader(new FileReader(f));
+                    String content = "";
+                    int lines = 0;
+                    while (br.ready() && lines < 50) {
+                        content += br.readLine() + "\n";
+                        lines++;
+                    }
+                    output.setText(content);
+                } catch (FileNotFoundException fnf) {
+                    fnf.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                output.setText("couldn't read this file! try permissions");
+            }
         }
+        String[] local = f.list();
+        if (local != null) {
+            Arrays.sort(local);
+        }
+        return local;
+
     }
 
     private void back() {
-        System.out.println(curdir);
-        if (curdir.lastIndexOf('/') != 0) {
-            gotoDir(curdir.substring(0, curdir.lastIndexOf('/')));
+        if (getCurentDir().lastIndexOf('/') != 0) {
+            gotoDir(getCurentDir().substring(0, getCurentDir().lastIndexOf('/')));
         } else {
             gotoDir("/");
         }
@@ -149,53 +170,46 @@ public class OpeningLayout implements Displayable {
             gotoDir("/");
         }
         curdir = dir;
+        workingDir.setText(getCurentDir());
         showDirs(getCurrent());
     }
 
     private void navigate(String d) {
-        //this 4 is to skip the "(l) " in front of each list element
-        if (curdir.equals("/")) {
-            curdir += d.substring(4, d.length());
-        } else {
-            curdir += "/" + d.substring(4, d.length());
+        if (d != null) {
+            //this 4 is to skip the "(l) " in front of each list element
+            if (getCurentDir().equals("/")) {
+                curdir += d.substring(4, d.length());
+            } else {
+                // we need to check if we're going to a dir
+                if (!new File(getCurentDir() + "/" + d).isFile()) {
+                    curdir += "/" + d.substring(4, d.length());
+                }
+                // if not, do nothing
+            }
+            workingDir.setText(getCurentDir());
+            showDirs(getCurrent());
         }
-        if (new File(curdir).isFile()) {
-//            showDirs();
-        }
-        showDirs(getCurrent());
     }
 
     private void showDirs(String[] loc) {
-        //label dirs vs files
-        for (int i = 0; i < loc.length; i++) {
-            if (new File(curdir + "/" + loc[i]).isDirectory()) {
-                loc[i] = "(d) " + loc[i];
-            } else {
-                loc[i] = "(f) " + loc[i];
+        if (loc != null) {
+            //label dirs vs files
+            for (int i = 0; i < loc.length; i++) {
+                if (new File(getCurentDir() + "/" + loc[i]).isDirectory()) {
+                    loc[i] = "(d) " + loc[i];
+                } else {
+                    loc[i] = "(f) " + loc[i];
+                }
             }
-        }
-        dirs.clear();
-        dirs.addAll(loc);
-    }
-
-    private void visit(String command) {
-        System.setProperty("user.dir", curdir);
-        String[] args = new String[]{"/bin/bash", "-c", command};
-        output.clear();
-        try {
-            Process proc = new ProcessBuilder(args).start();
-            BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            List<String> out = new LinkedList<>();
-            String init = reader.readLine();
-            while (init != null) {
-                output.setText(output.getText() + init);
-                init = reader.readLine();
-            }
-        } catch (IOException e) {
-            System.out.println("command: " + command);
+            dirs.clear();
+            dirs.addAll(loc);
+        } else {
+            dirs.clear();
         }
     }
 
+    private String getCurentDir() {
+        return curdir;
+    }
 
 }

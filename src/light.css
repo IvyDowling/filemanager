@@ -1,0 +1,16 @@
+.root {
+    -fx-border-color: dimgray;
+}
+.button {
+    -fx-background-color: white;
+    -fx-border-color: gray;
+    -fx-border-radius: 4;
+    -fx-padding: 5;
+    -fx-alignment: bottom;
+}
+
+#title {
+    -fx-font-family: Monospaced;
+    -fx-font-size: 20px;
+    -fx-padding: 5px;
+}

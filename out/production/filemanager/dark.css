@@ -1,9 +1,0 @@
-.root {
-    -fx-border-color: dimgray;
-}
-
-#title {
-    -fx-font-family: Monospaced;
-    -fx-font-size: 20px;
-    -fx-padding: 5px;
-}
