@@ -1,5 +1,4 @@
-# filemanager
-JavaFX file manager
+#JavaFX file manager
 reads the raw file contents, like cat
 
 to run this you need the Oracle JDK
